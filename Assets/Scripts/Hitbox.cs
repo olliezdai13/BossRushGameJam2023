@@ -35,14 +35,14 @@ public class Hitbox : MonoBehaviour
             collision.gameObject.TryGetComponent(out IDamageable damageableObject);
             if (damageableObject != null)
             {
-                Debug.Log("Damage hitbox hitting valid IDamageable for " + _damage + " damage.");
+                //Debug.Log("Damage hitbox hitting valid IDamageable for " + _damage + " damage.");
                 damageableObject.Damage(_damage);
             }
 
             collision.gameObject.TryGetComponent(out IKnockbackable knockbackableObject);
             if (knockbackableObject != null)
             {
-                Debug.Log("Knockback hitbox hitting valid IKnockbackable");
+                //Debug.Log("Knockback hitbox hitting valid IKnockbackable");
                 knockbackableObject.Knockback(_pushDirection, _pushForce, hitPos, parent);
             }
         }
