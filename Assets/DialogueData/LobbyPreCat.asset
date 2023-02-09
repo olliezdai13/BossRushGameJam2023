@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba544afa707424b43a6ff1e9e472cb90, type: 3}
+  m_Name: LobbyPreCat
+  m_EditorClassIdentifier: 
+  dialogue:
+  - line: Hey hun! How'd it go?
+    dialoguePortrait: 3
+    position: 1
+  - line: 'That insufferable rat...
+
+      He forced my hand! I had to
+
+      beat
+      him up to get my babies back!'
+    dialoguePortrait: 0
+    position: 0
+  - line: Duuude that's so siiick!
+    dialoguePortrait: 3
+    position: 1
+  - line: Then did you get your babies back?
+    dialoguePortrait: 3
+    position: 1
+  - line: ...
+    dialoguePortrait: 0
+    position: 0
+  - line: No, he didn't kidnap them...
+    dialoguePortrait: 0
+    position: 0
+  - line: 'Oh.
+
+
+      Wow.'
+    dialoguePortrait: 3
+    position: 1
+  - line: 'You beat him up anyways, eh?
+
+      Goes to show how much you genuinely
+
+      care
+      for your babies.'
+    dialoguePortrait: 3
+    position: 1
+  - line: 'Yes! They are the most precious things
+
+      in the universe to me.'
+    dialoguePortrait: 0
+    position: 0
+  - line: NOW HELP ME FIND THEM!
+    dialoguePortrait: 0
+    position: 0
+  - line: Stay chill duuude! Don't you worry.
+    dialoguePortrait: 3
+    position: 1
+  - line: 'Here, I think I might have another clue
+
+      as to where your babies
+      are.'
+    dialoguePortrait: 3
+    position: 1
+  - line: 'I''ve been hearing rumors that...
+
+      The cat is back in town.'
+    dialoguePortrait: 3
+    position: 1
+  - line: "And when the cat's back in town, \nnobody is safe... \nNot me, not you,
+      not your babies."
+    dialoguePortrait: 3
+    position: 1
+  - line: "ALRIGHT! PREPARE YOURSELF, \nYOU MURDEROUS FELINE!\n I'M COMING FOR WITH
+      VENGEANCE!"
+    dialoguePortrait: 0
+    position: 0
+  - line: Erm... Please be careful.
+    dialoguePortrait: 3
+    position: 1
+  dialogueName: LobbyPreCat
+  freezePlayer: 1

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BossFightTrigger : MonoBehaviour
+public class DialogueTrigger : MonoBehaviour
 {
     public DialogueObject dialogue;
     private bool triggered = false;

@@ -69,8 +69,12 @@ public class PlayerInvincibility : MonoBehaviour
 
     void OnHealthChange(Dictionary<string, object> data)
     {
-        IsHpInvincible = true;
-        _hpInvincibilityDuration = _hpInvincibilityDuration + invincibilityTimePerHit;
-        if (_renderer) _renderer.color = Color.gray;
+        bool activateInvincibility = (bool)data["activateInvincibility"];
+        if (activateInvincibility)
+        {
+            IsHpInvincible = true;
+            _hpInvincibilityDuration = _hpInvincibilityDuration + invincibilityTimePerHit;
+            if (_renderer) _renderer.color = Color.gray;
+        }
     }
 }

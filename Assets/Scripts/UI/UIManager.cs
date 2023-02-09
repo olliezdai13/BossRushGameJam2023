@@ -20,17 +20,20 @@ public class UIManager : MonoBehaviour
 
     void OnEnable()
     {
+        GameManager.instance.FadeInFromBlack();
         _healthBarBackground.enabled = false;
         _healthBarForeground.enabled = false;
         EventManager.StartListening("onHealthChange", OnPlayerHealthChange);
         EventManager.StartListening("onBossHealthChange", OnBossHealthChange);
         EventManager.StartListening("onDialogueClose", OnDialogueClose);
+        EventManager.StartListening("onDialogueOpen", OnDialogueOpen);
     }
     void OnDisable()
     {
         EventManager.StopListening("onHealthChange", OnPlayerHealthChange);
         EventManager.StopListening("onBossHealthChange", OnBossHealthChange);
         EventManager.StopListening("onDialogueClose", OnDialogueClose);
+        EventManager.StopListening("onDialogueOpen", OnDialogueOpen);
     }
 
     public static UIManager instance
@@ -110,6 +113,15 @@ public class UIManager : MonoBehaviour
         {
             _healthBarBackground.enabled = true;
             _healthBarForeground.enabled = true;
+        }
+    }
+    void OnDialogueOpen(Dictionary<string, object> data)
+    {
+        DialogueObject dialogue = (DialogueObject)data["dialogue"];
+        if (dialogue.FreezePlayer)
+        {
+            _healthBarBackground.enabled = false;
+            _healthBarBackground.enabled = false;
         }
     }
 }

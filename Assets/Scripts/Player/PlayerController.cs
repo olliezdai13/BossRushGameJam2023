@@ -129,6 +129,10 @@ public class PlayerController : MonoBehaviour, IKnockbackable
                 _speedX = 0;
                 _rb.velocity = Vector2.zero;
                 _animator.SetBool("moving", false);
+            },
+            onLogic: (state) => {
+                addYVel(-_gravityFalling * Time.deltaTime);
+                _animator.SetFloat("speedY", _rb.velocity.y);
             }));
 
         fsm.AddTriggerTransition("EndFrozen", new Transition("Frozen", "Idle"));
@@ -368,7 +372,6 @@ public class PlayerController : MonoBehaviour, IKnockbackable
 
         // attack handling
         _timeSinceLastAttack += Time.deltaTime;
-        Debug.Log(_timeSinceLastAttack);
 
         if (Input.GetAxisRaw("Fire1") != 0)
         {
@@ -537,9 +540,9 @@ public class PlayerController : MonoBehaviour, IKnockbackable
 
         // Handle update velocity
         addYVel(-_gravityFalling * Time.deltaTime);
-        faceInput();
 
         _animator.SetFloat("speedY", _rb.velocity.y);
+        faceInput();
     }
 
     // Helpers
@@ -773,7 +776,7 @@ public class PlayerController : MonoBehaviour, IKnockbackable
     // Handle behavior when player gets hit with knockback
     public void Knockback(Vector2 _direction, float force, Vector2 hitPos, Transform initiator)
     {
-        Debug.Log("KNOCKING BACK " + _knockbackDirection);
+        //Debug.Log("KNOCKING BACK " + _knockbackDirection);
         _knockbackDirection = -((Vector2)initiator.position - new Vector2(transform.position.x, transform.position.y)).normalized;
         float tempX = 0;
         if (Mathf.Abs(_knockbackDirection.x) <= Mathf.Epsilon)

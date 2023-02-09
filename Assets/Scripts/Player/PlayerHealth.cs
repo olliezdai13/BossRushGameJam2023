@@ -11,19 +11,22 @@ public class PlayerHealth : MonoBehaviour, IDamageable, IHealable
     private void Start()
     {
         _currentHealth = maxHealth;
-        EventManager.TriggerEvent("onHealthChange", new Dictionary<string, object> { { "newHp", _currentHealth }, { "maxHp", maxHealth } });
+        EventManager.TriggerEvent("onHealthChange", new Dictionary<string, object> { { "newHp", _currentHealth }, { "maxHp", maxHealth }, { "activateInvincibility", false } });
     }
 
     public void Damage(int amount)
     {
-        _currentHealth -= amount;
+        if (_currentHealth > 0)
+        {
+            _currentHealth -= amount;
+            EventManager.TriggerEvent("sfx", new Dictionary<string, object> { { "name", SfxNames.PlayerHit } });
+            EventManager.TriggerEvent("onHealthChange", new Dictionary<string, object> { { "newHp", _currentHealth }, { "maxHp", maxHealth }, { "activateInvincibility", true } });
+
+        }
         if (_currentHealth < 0)
         {
             _currentHealth = 0;
         }
-
-        EventManager.TriggerEvent("sfx", new Dictionary<string, object> { { "name", SfxNames.PlayerHit } });
-        EventManager.TriggerEvent("onHealthChange", new Dictionary<string, object> { { "newHp", _currentHealth }, { "maxHp", maxHealth } });
     }
 
     public void Heal(int amount)

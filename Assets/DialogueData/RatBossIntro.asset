@@ -13,10 +13,67 @@ MonoBehaviour:
   m_Name: RatBossIntro
   m_EditorClassIdentifier: 
   dialogue:
-  - Hey you big brick brained rat!
-  - WHERE ARE MY BABIES?
-  - 'I''ll make you pay for kidnapping my itty
+  - line: Hey you big ol' stinkin' rat!
+    dialoguePortrait: 0
+    position: 0
+  - line: TELL ME WHERE YOU HID MY BABIES!!!
+    dialoguePortrait: 0
+    position: 0
+  - line: 'If you don''t give them back right this instant,
 
-    bitty cutie pies >:('
+      I''ll tear your
+      big rat tail off!'
+    dialoguePortrait: 0
+    position: 0
+  - line: SKREEEEE!!!
+    dialoguePortrait: 1
+    position: 1
+  - line: 'Babies?!
+
+      When did me take babies?'
+    dialoguePortrait: 1
+    position: 1
+  - line: 'Don''t play dumb with my you brute!
+
+      You give them back THIS INSTANT
+
+      or
+      I''ll... I''ll...'
+    dialoguePortrait: 0
+    position: 0
+  - line: '...
+
+      I''ll tell your manager!'
+    dialoguePortrait: 0
+    position: 0
+  - line: 'SQUEHEHEHEHE!
+
+      You funny, racoon woman!'
+    dialoguePortrait: 1
+    position: 1
+  - line: 'Maybe I took babies!
+
+      ...
+
+      Maybe I no took babies!'
+    dialoguePortrait: 1
+    position: 1
+  - line: 'Either way...
+
+      What you gonna do bout it?
+
+      Fight me? You look
+      too weak!'
+    dialoguePortrait: 1
+    position: 1
+  - line: 'Weak racoon momma stands no chance!
+
+      Cannot win against RAT KING
+      "BRICK"!'
+    dialoguePortrait: 1
+    position: 1
+  - line: GRAAAAH! Try me!
+    dialoguePortrait: 0
+    position: 0
   dialogueName: RatBossIntro
   freezePlayer: 1

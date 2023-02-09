@@ -1,10 +1,20 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
     private static GameManager gameManager;
+    private Image fadeToBlackImage;
+    public float fadeOutTime;
+    public float fadeInTime;
+    public float fadeOutTimeToLobby;
+    public AnimationCurve fadeCurve = new AnimationCurve(
+      new Keyframe(0, 0, 1, 1),
+      new Keyframe(1, 1, 1, 1)
+    );
     public static GameManager instance
     {
         get
@@ -30,20 +40,73 @@ public class GameManager : MonoBehaviour
     }
     void Init()
     {
+        fadeToBlackImage = GameObject.FindGameObjectWithTag("FadeBlackImage").GetComponent<Image>();
     }
 
-    //[Header("PreFightIdle")]
-    //public float _preFightIdleDuration;
-
-    private void Start()
+    public void EnterBoss1()
     {
-        //StartCoroutine(WaitAndSignalStart(_preFightIdleDuration));
+        StartCoroutine(FadeToLevel(gameManager.fadeOutTime, "Boss1"));
+    }
+    public void EnterBoss2()
+    {
+        StartCoroutine(FadeToLevel(gameManager.fadeOutTime, "Boss2"));
+    }
+    public void EnterBoss3()
+    {
+        StartCoroutine(FadeToLevel(gameManager.fadeOutTime, "Boss3"));
+    }
+    public void EnterLobby()
+    {
+        StartCoroutine(FadeToLevel(gameManager.fadeOutTimeToLobby, "Lobby"));
     }
 
-    //IEnumerator WaitAndSignalStart(float time)
-    //{
-    //    yield return new WaitForSeconds(time);
-    //    EventManager.TriggerEvent("onPreFightIdleEnd", new Dictionary<string, object> {});
-    //}
+    public void FadeInFromBlack()
+    {
+        fadeToBlackImage = GameObject.FindGameObjectWithTag("FadeBlackImage").GetComponent<Image>();
+        fadeToBlackImage.color = new Color(
+                fadeToBlackImage.color.r,
+                fadeToBlackImage.color.g,
+                fadeToBlackImage.color.b,
+                1);
 
+        StartCoroutine(FadeIn(gameManager.fadeInTime));
+    }
+    IEnumerator FadeToLevel(float duration, string sceneName)
+    {
+        float adjustedDuration = duration;
+        float journey = 0f;
+        while (journey <= adjustedDuration)
+        {
+            journey = journey + Time.deltaTime;
+            float percent = Mathf.Clamp01(journey / adjustedDuration);
+            float curvePercent = fadeCurve.Evaluate(percent);
+            fadeToBlackImage.color = new Color(
+                fadeToBlackImage.color.r, 
+                fadeToBlackImage.color.g, 
+                fadeToBlackImage.color.b, 
+                Mathf.LerpUnclamped(0, 1, curvePercent));
+
+            yield return null;
+        }
+        yield return new WaitForSeconds(1);
+        SceneManager.LoadScene(sceneName);
+    }
+    IEnumerator FadeIn(float duration)
+    {
+        float adjustedDuration = Mathf.Abs(0 - 1) * duration;
+        float journey = 0f;
+        while (journey <= adjustedDuration)
+        {
+            journey = journey + Time.deltaTime;
+            float percent = Mathf.Clamp01(journey / adjustedDuration);
+            float curvePercent = fadeCurve.Evaluate(percent);
+            fadeToBlackImage.color = new Color(
+                fadeToBlackImage.color.r,
+                fadeToBlackImage.color.g,
+                fadeToBlackImage.color.b,
+                Mathf.LerpUnclamped(1, 0, curvePercent));
+
+            yield return null;
+        }
+    }
 }

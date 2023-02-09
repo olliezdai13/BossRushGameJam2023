@@ -28,7 +28,7 @@ public class Hitbox : MonoBehaviour
     {
         if ((layerMask.value & (1 << collision.transform.gameObject.layer)) > 0)
         {
-            Debug.Log("Hitbox hit valid layer");
+            //Debug.Log("Hitbox hit valid layer");
             Vector2 hitPos = collision.gameObject.transform.position;
             EventManager.TriggerEvent("onHitboxCollision", new Dictionary<string, object> { { "hitPosition", hitPos }, { "initiator", initiator } });
 

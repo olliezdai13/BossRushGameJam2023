@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba544afa707424b43a6ff1e9e472cb90, type: 3}
+  m_Name: RatBossDeath
+  m_EditorClassIdentifier: 
+  dialogue:
+  - line: 'SQUEEEAK!!!
+
+      That hurts!'
+    dialoguePortrait: 1
+    position: 1
+  - line: Serves you right for kidnapping my babies!
+    dialoguePortrait: 0
+    position: 0
+  - line: 'Now tell me where they are before I
+
+      BEAT THE REMAINING LIFE OUT
+      OF
+
+      YOU!'
+    dialoguePortrait: 0
+    position: 0
+  - line: Hold up! Hold up!
+    dialoguePortrait: 1
+    position: 1
+  - line: "I didn't kidnap them!\nYou crazy trash panda! \nI don't even look like
+      a psycho kidnapper!"
+    dialoguePortrait: 1
+    position: 1
+  - line: Uhh, yeah. You do.
+    dialoguePortrait: 0
+    position: 0
+  - line: 'Grrr...
+
+      That''s a harmful stereotype!
+
+      You meanie!'
+    dialoguePortrait: 1
+    position: 1
+  - line: Wait, if you really didn't take my babies...
+    dialoguePortrait: 0
+    position: 0
+  - line: Then who did?
+    dialoguePortrait: 0
+    position: 0
+  - line: Don't know. Don't care!
+    dialoguePortrait: 1
+    position: 1
+  - line: 'Get out!
+
+      My house!
+
+      My sewer!'
+    dialoguePortrait: 1
+    position: 1
+  - line: GET OUT NOW!!!
+    dialoguePortrait: 1
+    position: 1
+  - line: Alright, fine! I'm leaving.
+    dialoguePortrait: 0
+    position: 0
+  dialogueName: RatBossDeath
+  freezePlayer: 1

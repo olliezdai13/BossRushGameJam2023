@@ -6,7 +6,6 @@ using TMPro;
 public class TypewriterEffect : MonoBehaviour
 {
     [SerializeField] private float typewriterSpeed = 50f;
-    [SerializeField] private float preTypeTime = 1f;
     public Coroutine Run(string textToType, TMP_Text textLabel)
     {
         return StartCoroutine(TypeText(textToType, textLabel));

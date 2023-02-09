@@ -14,7 +14,8 @@ public enum RatState
 }
 
 [Serializable]
-public class RatAction {
+public class RatAction
+{
     public RatState state;
     public float time;
     public Transform target;

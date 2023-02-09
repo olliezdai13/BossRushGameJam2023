@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba544afa707424b43a6ff1e9e472cb90, type: 3}
+  m_Name: LobbyPreRat
+  m_EditorClassIdentifier: 
+  dialogue:
+  - line: Hey, <racoon name>, good morning!
+    dialoguePortrait: 3
+    position: 1
+  - line: 'DON''T YOU "good morning" ME!!!
+
+      MY BABIES ARE GONE!'
+    dialoguePortrait: 0
+    position: 0
+  - line: Oh no! Your itty bitty adorable racoon babies?
+    dialoguePortrait: 3
+    position: 1
+  - line: ... Where'd they go?
+    dialoguePortrait: 3
+    position: 1
+  - line: 'I DON''T KNOW YOU DIMWIT! THAT''S
+
+      EXACTLY WHAT I''M ASKING YOU!!!'
+    dialoguePortrait: 0
+    position: 0
+  - line: 'Alright, alright! Don''t get your stripes
+
+      all tangled miss!'
+    dialoguePortrait: 3
+    position: 1
+  - line: "If I had to guess, those sneaky rats might \nhave snuck in last night
+      and snatched\nyour babies from right under your nose."
+    dialoguePortrait: 3
+    position: 1
+  - line: "Though, that's all speculation... \nI haven't actually seen any rats \naround
+      lately."
+    dialoguePortrait: 3
+    position: 1
+  - line: ALRIGHT THAT SETTLES IT!
+    dialoguePortrait: 0
+    position: 0
+  - line: "I'LL BEAT THE LIVING SNOT OUT OF \nTHOSE EVIL KIDNAPPER RATS!"
+    dialoguePortrait: 0
+    position: 0
+  - line: MY BABIES! I'M COMING FOR YOU!!!
+    dialoguePortrait: 0
+    position: 0
+  dialogueName: LobbyPreRat
+  freezePlayer: 1

@@ -28,7 +28,7 @@ enum ActionSubstate
 }
 enum JumpSubstate
 {
-    Jump, Hover, Fall, Ground
+    PreJump, Jump, Hover, Fall, Ground
 }
 
 public class RatBehavior : MonoBehaviour
@@ -57,6 +57,8 @@ public class RatBehavior : MonoBehaviour
     public float _jumpHoverTime = 1;
     public float _jumpFallSpeed = 1;
     public float _jumpGroundTime = 1;
+    public float _jumpWindupTime = 1;
+    public GameObject _shadowObject;
     [Header("Waypoints")]
     public Transform _waypointGroundLevel;
     public Transform _waypointAirLevel;
@@ -89,25 +91,28 @@ public class RatBehavior : MonoBehaviour
     private Animator _animator;
     private CinemachineImpulseSource _impulseSource;
     private SpriteRenderer _renderer;
+    private Transform _playerTransform;
 
     void Start()
     {
         fsm = new StateMachine(this);
         //_rb = GetComponent<Rigidbody2D>();
-        //_animator = GetComponent<Animator>();
-        _renderer = GetComponent<SpriteRenderer>();
+        _animator = GetComponentInChildren<Animator>();
+        _playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
+        _renderer = GetComponentInChildren<SpriteRenderer>();
         _impulseSource = GetComponent<CinemachineImpulseSource>();
         if (_spinHitbox)
         {
             _spinHitbox.SetActive(false);
         }
+        _shadowObject.SetActive(false);
 
         // --- PreFightIdleState SETUP ---
         fsm.AddState("PreFightIdleState", new State(
         onEnter: (state) =>
         {
             if (doLogging) Debug.Log("Entering PreFightIdleState");
-            _renderer.color = Color.white;
+            _animator.SetTrigger("idle");
         },
         onLogic: (state) => {
             if (!_isPreFightIdle)
@@ -121,7 +126,6 @@ public class RatBehavior : MonoBehaviour
         onEnter: (state) =>
         {
             if (doLogging) Debug.Log("Entering IdleState");
-            _renderer.color = Color.white;
         }, 
         onLogic: (state) => {
             if (state.timer.Elapsed >= _actionDuration) {
@@ -135,14 +139,16 @@ public class RatBehavior : MonoBehaviour
         {
             if (doLogging) Debug.Log("Entering DashState");
             EventManager.TriggerEvent("sfx", new Dictionary<string, object> { { "name", SfxNames.RatDashWindup } });
-            _renderer.color = Color.red;
             if (CloserToLeft())
             {
                 _moveTarget = _waypointDashRight.position;
+                FaceRight();
             } else
             {
                 _moveTarget = _waypointDashLeft.position;
+                FaceLeft();
             }
+            _animator.SetTrigger("dashWindup");
         },
         onLogic: (state) => {
             if (_actionSubstate == ActionSubstate.Start)
@@ -153,6 +159,7 @@ public class RatBehavior : MonoBehaviour
                 {
                     _actionSubstate = ActionSubstate.Action;
                     EventManager.TriggerEvent("sfx", new Dictionary<string, object> { { "name", SfxNames.RatDash } });
+                    _animator.SetTrigger("dash");
                 }
             } else if (_actionSubstate == ActionSubstate.Action)
             {
@@ -162,6 +169,7 @@ public class RatBehavior : MonoBehaviour
                 {
                     _actionSubstate = ActionSubstate.End;
                     _tempTimer1 = state.timer.Elapsed;
+                    _animator.SetTrigger("idle");
                 }
             } else if (_actionSubstate == ActionSubstate.End)
             {
@@ -170,6 +178,16 @@ public class RatBehavior : MonoBehaviour
                     TriggerNextState();
                 }
             }
+        },
+        onExit: (state) =>
+        {
+            if (CloserToLeft())
+            {
+                FaceRight();
+            } else
+            {
+                FaceLeft();
+            }
         }));
 
         // --- ThrowState SETUP ---
@@ -177,7 +195,6 @@ public class RatBehavior : MonoBehaviour
         onEnter: (state) =>
         {
             if (doLogging) Debug.Log("Entering ThrowState");
-            _renderer.color = Color.blue;
             _tempCounter1 = 0;
         },
         onLogic: (state) => {
@@ -189,6 +206,7 @@ public class RatBehavior : MonoBehaviour
                 if (state.timer.Elapsed > _dashStartTime)
                 {
                     _actionSubstate = ActionSubstate.Action;
+                    _animator.SetTrigger("throw");
                 }
             }
             else if (_actionSubstate == ActionSubstate.Action)
@@ -227,14 +245,15 @@ public class RatBehavior : MonoBehaviour
                 {
                     TriggerNextState();
                 }
+                _animator.SetTrigger("idle");
             }
         },
         onExit: (state) =>
         {
-            StopCoroutine(throw1);
-            StopCoroutine(throw2);
-            StopCoroutine(throw3);
-            StopCoroutine(throw4);
+            if (throw1 != null) StopCoroutine(throw1);
+            if (throw2 != null) StopCoroutine(throw2);
+            if (throw3 != null) StopCoroutine(throw3);
+            if (throw4 != null) StopCoroutine(throw4);
         }));
 
         // --- JumpState SETUP ---
@@ -242,13 +261,24 @@ public class RatBehavior : MonoBehaviour
         onEnter: (state) =>
         {
             if (doLogging) Debug.Log("Entering JumpState");
-            _renderer.color = Color.green;
             _jumpSubstate = JumpSubstate.Jump;
-            _moveTarget = new Vector2(_actionTarget.position.x, _waypointAirLevel.position.y);
+            _shadowObject.SetActive(true);
+            _tempTimer1 = state.timer.Elapsed;
+            _animator.SetTrigger("dashWindup");
         },
         onLogic: (state) => {
-            if (_jumpSubstate == JumpSubstate.Jump)
+            if (_jumpSubstate == JumpSubstate.PreJump)
             {
+                if (state.timer.Elapsed - _tempTimer1 > _jumpWindupTime)
+                {
+                    _jumpSubstate = JumpSubstate.Jump;
+                    _tempTimer1 = state.timer.Elapsed;
+                    _animator.SetTrigger("jump");
+                }
+            } else  if (_jumpSubstate == JumpSubstate.Jump)
+            {
+                _shadowObject.transform.position = new Vector2(transform.position.x, _shadowObject.transform.position.y);
+                _moveTarget = new Vector2(_playerTransform.position.x, _waypointAirLevel.position.y);
                 if (Vector2.Distance(transform.position, _moveTarget) < Mathf.Epsilon)
                 {
                     _jumpSubstate = JumpSubstate.Hover;
@@ -259,11 +289,18 @@ public class RatBehavior : MonoBehaviour
                 }
             } else if (_jumpSubstate == JumpSubstate.Hover)
             {
+                if (state.timer.Elapsed - _tempTimer1 < _jumpHoverTime / 1.1f)
+                {
+                    _shadowObject.transform.position = new Vector2(transform.position.x, _shadowObject.transform.position.y);
+                    _moveTarget = new Vector2(_playerTransform.position.x, _waypointAirLevel.position.y);
+                    transform.position = Vector2.MoveTowards(transform.position, _moveTarget, _jumpSpeed * Time.deltaTime);
+                }
                 if (state.timer.Elapsed - _tempTimer1 > _jumpHoverTime)
                 {
                     _jumpSubstate = JumpSubstate.Fall;
                     _tempTimer1 = state.timer.Elapsed;
                     _moveTarget = new Vector2(_moveTarget.x, _waypointGroundLevel.position.y);
+                    _animator.SetTrigger("fall");
                 }
             }
             else if (_jumpSubstate == JumpSubstate.Fall)
@@ -271,8 +308,9 @@ public class RatBehavior : MonoBehaviour
                 if (Vector2.Distance(transform.position, _moveTarget) < Mathf.Epsilon)
                 {
                     _jumpSubstate = JumpSubstate.Ground;
+                    _shadowObject.SetActive(false);
                     _tempTimer1 = state.timer.Elapsed;
-                    _impulseSource.GenerateImpulseWithForce(.1f);
+                    _impulseSource.GenerateImpulseWithForce(.2f);
                     EventManager.TriggerEvent("sfx", new Dictionary<string, object> { { "name", SfxNames.RatLand } });
                 }
                 else
@@ -295,7 +333,7 @@ public class RatBehavior : MonoBehaviour
         onEnter: (state) =>
         {
             if (doLogging) Debug.Log("Entering SpinState");
-            _renderer.color = Color.yellow;
+            _animator.SetTrigger("idle");
         },
         onLogic: (state) => {
             if (_actionSubstate == ActionSubstate.Start)
@@ -306,11 +344,11 @@ public class RatBehavior : MonoBehaviour
                 {
                     _actionSubstate = ActionSubstate.Action;
                     _tempTimer1 = state.timer.Elapsed;
-                    _renderer.color = Color.red;
                     _spinHitbox.SetActive(true);
                     _spinParticleSystem.Emit(1);
                     _spinImpulseSource.GenerateImpulseWithForce(1);
                     EventManager.TriggerEvent("sfx", new Dictionary<string, object> { { "name", SfxNames.RatSpin } });
+                    _animator.SetTrigger("spin");
                 }
             }
             else if (_actionSubstate == ActionSubstate.Action)
@@ -319,7 +357,6 @@ public class RatBehavior : MonoBehaviour
                 {
                     _actionSubstate = ActionSubstate.End;
                     _tempTimer1 = state.timer.Elapsed;
-                    _renderer.color = Color.yellow;
                     _spinHitbox.SetActive(false);
                 }
             }
@@ -340,16 +377,16 @@ public class RatBehavior : MonoBehaviour
         onEnter: (state) =>
         {
             if (doLogging) Debug.Log("Entering DeadState");
-            _renderer.color = Color.gray;
+            _renderer.color = Color.red;
             BoxCollider2D[] colliders = GetComponentsInChildren<BoxCollider2D>();
             foreach (BoxCollider2D collider in colliders)
             {
                 if (collider.isTrigger) collider.enabled = false;
             }
             // TODO: play dead animation
+            _animator.SetTrigger("idle");
         }));
 
-        fsm.AddTriggerTransitionFromAny("TriggerIdle", new Transition("", "IdleState"));
         fsm.AddTriggerTransitionFromAny("TriggerIdle", new Transition("", "IdleState"));
         fsm.AddTriggerTransitionFromAny("TriggerDash", new Transition("", "DashState"));
         fsm.AddTriggerTransitionFromAny("TriggerThrow", new Transition("", "ThrowState"));
@@ -379,6 +416,9 @@ public class RatBehavior : MonoBehaviour
         {
             case RatState.IDLE:
                 _actionDuration = newAction.time;
+                // Only animate idle when we explicitly say to switch to idle
+                // Other states rely on Idle to reset certain variables, and switch to and fro automatically
+                _animator.SetTrigger("idle");
                 fsm.Trigger("TriggerIdle");
                 break;
             case RatState.DASH:
@@ -444,5 +484,14 @@ public class RatBehavior : MonoBehaviour
     private void StartFight()
     {
         _isPreFightIdle = false;
+    }
+
+    private void FaceLeft()
+    {
+        _renderer.flipX = false;
+    }
+    private void FaceRight()
+    {
+        _renderer.flipX = true;
     }
 }
