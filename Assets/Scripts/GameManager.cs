@@ -6,6 +6,8 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    // 0 lobby, 1 rat, 2 cat, 3 owl
+    public int currentLevel;
     private static GameManager gameManager;
     private Image fadeToBlackImage;
     public float fadeOutTime;
@@ -38,6 +40,7 @@ public class GameManager : MonoBehaviour
             return gameManager;
         }
     }
+
     void Init()
     {
         fadeToBlackImage = GameObject.FindGameObjectWithTag("FadeBlackImage").GetComponent<Image>();
@@ -45,19 +48,32 @@ public class GameManager : MonoBehaviour
 
     public void EnterBoss1()
     {
+        currentLevel = 1;
+        GameData.lobbySpawn = LobbySpawn.RAT;
         StartCoroutine(FadeToLevel(gameManager.fadeOutTime, "Boss1"));
+        GameData.justWon = false;
+        GameData.justLost = false;
     }
     public void EnterBoss2()
     {
+        currentLevel = 2;
+        GameData.lobbySpawn = LobbySpawn.CAT;
         StartCoroutine(FadeToLevel(gameManager.fadeOutTime, "Boss2"));
+        GameData.justWon = false;
+        GameData.justLost = false;
     }
     public void EnterBoss3()
     {
+        currentLevel = 3;
+        GameData.lobbySpawn = LobbySpawn.OWL;
         StartCoroutine(FadeToLevel(gameManager.fadeOutTime, "Boss3"));
+        GameData.justWon = false;
+        GameData.justLost = false;
     }
-    public void EnterLobby()
+    public void EnterLobby(float time = 0)
     {
-        StartCoroutine(FadeToLevel(gameManager.fadeOutTimeToLobby, "Lobby"));
+        currentLevel = 0;
+        StartCoroutine(FadeToLevel(time == 0 ? gameManager.fadeOutTimeToLobby : time, "Lobby"));
     }
 
     public void FadeInFromBlack()
@@ -89,6 +105,7 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
         yield return new WaitForSeconds(1);
+        EventManager.TriggerEvent("stopSoundtrack", new Dictionary<string, object> { });
         SceneManager.LoadScene(sceneName);
     }
     IEnumerator FadeIn(float duration)
@@ -107,6 +124,34 @@ public class GameManager : MonoBehaviour
                 Mathf.LerpUnclamped(1, 0, curvePercent));
 
             yield return null;
+        }
+    }
+
+    private float fixedDeltaTime;
+    void Awake()
+    {
+        // Make a copy of the fixedDeltaTime, it defaults to 0.02f, but it can be changed in the editor
+        this.fixedDeltaTime = Time.fixedDeltaTime;
+    }
+    private void Update()
+    {
+        if (Input.GetKey(KeyCode.Alpha0) && Input.GetKey(KeyCode.Alpha1))
+        {
+            GameData.beatRat = true;
+            GameData.beatCat = true;
+            GameData.beatOwl = true;
+            GameData.hasKey = true;
+        }
+
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            if (Time.timeScale == 1.0f)
+                Time.timeScale = 0.1f;
+            else
+                Time.timeScale = 1.0f;
+            // Adjust fixed delta time according to timescale
+            // The fixed delta time will now be 0.02 real-time seconds per frame
+            Time.fixedDeltaTime = this.fixedDeltaTime * Time.timeScale;
         }
     }
 }

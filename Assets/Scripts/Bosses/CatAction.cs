@@ -9,7 +9,8 @@ public enum CatState
     IDLE,
     STRANDS, // Sends out random screen-wide slicing strands
     CLAWS, // Sends out player-targeting triple line "claws" of strands
-    TELEPORT, // Fades out of existence to a new target (or random spot in bounds)
+    TELEPORT_OUT, // Fades out of existence
+    TELEPORT_IN, // Fades into existence
     SLASH, // Slashes in the direction it's facing in a wide arc
     PROJECTILE // (if conditions apply) Spawns a slow-moving projectile where it is standing (should be preceeded by teleports)
 }

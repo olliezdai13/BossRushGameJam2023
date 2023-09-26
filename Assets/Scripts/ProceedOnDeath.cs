@@ -7,6 +7,9 @@ public class ProceedOnDeath : MonoBehaviour
     public DialogueObject dialogue;
     public float bossDeadContinueDelay = 2f;
     public BossDoor.BossDoorType boss;
+    public SoundtrackNames deadSoundtrackName;
+    // If true, there's a boss exit door on this level. Just don't fade to Lobby.
+    public bool bossDoorMode = true;
     void OnEnable()
     {
         EventManager.StartListening("onBossHealthChange", OnBossHealthChange);
@@ -37,7 +40,9 @@ public class ProceedOnDeath : MonoBehaviour
 
     private IEnumerator BossDie()
     {
+        EventManager.TriggerEvent("stopSoundtrack", new Dictionary<string, object> { });
         yield return new WaitForSeconds(bossDeadContinueDelay);
+        EventManager.TriggerEvent("soundtrack", new Dictionary<string, object> { { "name", deadSoundtrackName } });
         if (boss == BossDoor.BossDoorType.RAT)
         {
             GameData.beatRat = true;
@@ -53,15 +58,18 @@ public class ProceedOnDeath : MonoBehaviour
             GameData.beatOwl = true;
             GameData.timesWonToOwl++;
         }
+        GameData.justLost = false;
         GameObject ui = GameObject.FindGameObjectWithTag("UI");
         DialogueManager dialogueManager = ui.GetComponent<DialogueManager>();
         if (dialogueManager && dialogue)
         {
-            dialogueManager.ShowDialogue(dialogue, onEnd: () => 
+            if (!bossDoorMode)
             {
-                GameManager.instance.EnterLobby();
+                dialogueManager.ShowDialogue(dialogue, onEnd: () => { GameData.justWon = true; GameManager.instance.EnterLobby(); });
+            } else
+            {
+                dialogueManager.ShowDialogue(dialogue, onEnd: () => { GameData.justWon = true; });
             }
-            );
         }
     }
 
@@ -82,6 +90,9 @@ public class ProceedOnDeath : MonoBehaviour
         {
             GameData.timesLostToOwl++;
         }
+        GameData.justLost = true;
+        GameData.justWon = false;
+        EventManager.TriggerEvent("stopSoundtrack", new Dictionary<string, object> { });
         GameManager.instance.EnterLobby();
     }
 }

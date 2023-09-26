@@ -95,6 +95,8 @@ public class PlayerController : MonoBehaviour, IKnockbackable
     private Vector2 _knockbackDirection;
     private bool _attackStunFromAttack;
     private float _attackStunFromAttackForce;
+    private bool _attackHitboxEnabled = false;
+    private bool _dead = false;
 
     // PUBLICLY ACCESSIBLE VALUES
     public bool FacingRight { get { return _facingRight; } }
@@ -104,6 +106,8 @@ public class PlayerController : MonoBehaviour, IKnockbackable
         EventManager.StartListening("onHitboxCollision", OnHitboxCollision);
         EventManager.StartListening("onDialogueOpen", OnDialogueOpen);
         EventManager.StartListening("onDialogueClose", OnDialogueClose);
+        EventManager.StartListening("onHealthChange", OnPlayerHealthChange);
+        EventManager.StartListening("door", OnDoor);
     }
 
     void OnDisable()
@@ -111,6 +115,8 @@ public class PlayerController : MonoBehaviour, IKnockbackable
         EventManager.StopListening("onHitboxCollision", OnHitboxCollision);
         EventManager.StopListening("onDialogueOpen", OnDialogueOpen);
         EventManager.StopListening("onDialogueClose", OnDialogueClose);
+        EventManager.StopListening("onHealthChange", OnPlayerHealthChange);
+        EventManager.StopListening("door", OnDoor);
     }
     void Start()
     {
@@ -359,6 +365,23 @@ public class PlayerController : MonoBehaviour, IKnockbackable
         fsm.AddTriggerTransitionFromAny("OnAttack", new Transition("", "AttackStun"));
 
 
+        // --- DEAD SETUP ---
+        fsm.AddState("Dead", new State(
+            onEnter: (state) =>
+            {
+                if (doLogging) Debug.Log("Entering Dead state");
+                _speedX = 0;
+                _rb.velocity = Vector2.zero;
+                _animator.SetTrigger("dead");
+            },
+            onLogic: (state) => {
+                addYVel(-_gravityFalling * Time.deltaTime);
+            }));
+
+        fsm.AddTriggerTransitionFromAny("Dead", new Transition("", "Dead"));
+
+
+
         fsm.SetStartState("Idle");
         fsm.Init();
     }
@@ -393,7 +416,19 @@ public class PlayerController : MonoBehaviour, IKnockbackable
                 _attackTimer = 0;
                 _timeSinceLastAttack = 0;
                 _attackDirection = inputDirectionQuad();
-                enableHitbox(_attackDirection);
+                if (Mathf.Abs(_attackDirection.x) > Mathf.Epsilon)
+                {
+                    _animator.SetTrigger("attackSide");
+                }
+                else if(_attackDirection.y > Mathf.Epsilon)
+                {
+                    _animator.SetTrigger("attackUp");
+                } 
+                else 
+                {
+                    _animator.SetTrigger("attackDown");
+                }
+                EventManager.TriggerEvent("sfx", new Dictionary<string, object> { { "name", SfxNames.PlayerAttackMiss } });
             }
         }
         if (_isAttacking)
@@ -407,6 +442,10 @@ public class PlayerController : MonoBehaviour, IKnockbackable
             if (_attackTimer >= _attackHitboxEnd)
             {
                 disableHitboxes();
+            }
+            if (_attackTimer >= _attackHitboxStart && _attackTimer < _attackHitboxEnd && !_attackHitboxEnabled)
+            {
+                enableHitbox(_attackDirection);
             }
         }
     }
@@ -491,7 +530,7 @@ public class PlayerController : MonoBehaviour, IKnockbackable
     private void OnEnterRising(State<string, string> state)
     {
         if (doLogging) Debug.Log("Entering Rising state");
-        disableHitboxes();
+        //disableHitboxes();
         _jumpTimer = 0;
 
         _animator.SetBool("grounded", false);
@@ -520,7 +559,7 @@ public class PlayerController : MonoBehaviour, IKnockbackable
     private void OnEnterFalling(State<string, string> state)
     {
         if (doLogging) Debug.Log("Entering Falling state");
-        disableHitboxes();
+        //disableHitboxes();
         _jumpTimer = 0;
 
         _animator.SetBool("grounded", false);
@@ -704,7 +743,8 @@ public class PlayerController : MonoBehaviour, IKnockbackable
 
     void enableHitbox(Vector2 direction)
     {
-        EventManager.TriggerEvent("sfx", new Dictionary<string, object> { { "name", SfxNames.PlayerAttackMiss } });
+        _attackHitboxEnabled = true;
+        //EventManager.TriggerEvent("sfx", new Dictionary<string, object> { { "name", SfxNames.PlayerAttackMiss } });
         if (direction.x > 0)
         {
             _hitboxRight.SetActive(true);
@@ -725,6 +765,7 @@ public class PlayerController : MonoBehaviour, IKnockbackable
 
     void disableHitboxes()
     {
+        _attackHitboxEnabled = false;
         _hitboxRight.SetActive(false);
         _hitboxLeft.SetActive(false);
         _hitboxUp.SetActive(false);
@@ -742,7 +783,6 @@ public class PlayerController : MonoBehaviour, IKnockbackable
         {
             _knockbackDirection = -(hitPos - new Vector2(transform.position.x, transform.position.y)).normalized;
             _attackStunFromAttack = true;
-            Debug.Log("Reducing timer");
             _timeSinceLastAttack -= _attackHitExtraCooldownDelay;
             fsm.Trigger("OnAttack");
         }
@@ -776,20 +816,29 @@ public class PlayerController : MonoBehaviour, IKnockbackable
     // Handle behavior when player gets hit with knockback
     public void Knockback(Vector2 _direction, float force, Vector2 hitPos, Transform initiator)
     {
-        //Debug.Log("KNOCKING BACK " + _knockbackDirection);
-        _knockbackDirection = -((Vector2)initiator.position - new Vector2(transform.position.x, transform.position.y)).normalized;
-        float tempX = 0;
-        if (Mathf.Abs(_knockbackDirection.x) <= Mathf.Epsilon)
-        {
-            tempX = 1;
-        } else
-        {
-            tempX = _knockbackDirection.x;
+        if (!_dead) {
+            if (_direction.magnitude > 0)
+            {
+                _knockbackDirection = _direction;
+            }
+            else
+            {
+                _knockbackDirection = -((Vector2)initiator.position - new Vector2(transform.position.x, transform.position.y)).normalized;
+            }
+            float tempX = 0;
+            if (Mathf.Abs(_knockbackDirection.x) <= Mathf.Epsilon && Mathf.Abs(_knockbackDirection.y) <= Mathf.Epsilon)
+            {
+                tempX = 1;
+            } else
+            {
+                tempX = _knockbackDirection.x;
+            }
+            _knockbackDirection = new Vector2(tempX, Mathf.Clamp(_knockbackDirection.y, 0, 1)).normalized;
+            _attackStunFromAttack = false;
+            _attackStunFromAttackForce = force;
+            fsm.Trigger("OnAttack");
+            _animator.SetTrigger("hit");
         }
-        _knockbackDirection = new Vector2(tempX, Mathf.Clamp(_knockbackDirection.y, 0, 1)).normalized;
-        _attackStunFromAttack = false;
-        _attackStunFromAttackForce = force;
-        fsm.Trigger("OnAttack");
     }
 
     void OnDialogueOpen(Dictionary<string, object> data)
@@ -807,5 +856,23 @@ public class PlayerController : MonoBehaviour, IKnockbackable
         {
             fsm.Trigger("EndFrozen");
         }
+    }
+    void OnPlayerHealthChange(Dictionary<string, object> data)
+    {
+        int hp = (int)data["newHp"];
+        if (hp <= 0)
+        {
+            PlayerDie();
+        }
+    }
+    void PlayerDie()
+    {
+        GetComponent<BoxCollider2D>().enabled = false;
+        fsm.Trigger("Dead");
+        _dead = true;
+    }
+    void OnDoor(Dictionary<string, object> data)
+    {
+        fsm.Trigger("Frozen");
     }
 }

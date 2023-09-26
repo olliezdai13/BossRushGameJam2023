@@ -28,7 +28,7 @@ enum ActionSubstate
 }
 enum JumpSubstate
 {
-    PreJump, Jump, Hover, Fall, Ground
+    PreJump, Jump, Hover, Fall, Ground, HoverStill,
 }
 
 public class RatBehavior : MonoBehaviour
@@ -55,16 +55,21 @@ public class RatBehavior : MonoBehaviour
     [Header("Jump")]
     public float _jumpSpeed = 1;
     public float _jumpHoverTime = 1;
+    public float _jumpHoverStillTime = 1;
     public float _jumpFallSpeed = 1;
     public float _jumpGroundTime = 1;
     public float _jumpWindupTime = 1;
     public GameObject _shadowObject;
+    public GameObject _rubblePrefab;
     [Header("Waypoints")]
     public Transform _waypointGroundLevel;
     public Transform _waypointAirLevel;
     public Transform _waypointDashLeft;
     public Transform _waypointDashRight;
     [Header("Spin")]
+    public GameObject _rageParticlesPrefab;
+    public Vector2 _rageExplosionOffset;
+    public GameObject _rageExplosionPrefab;
     public float _spinDuration = 2f;
     public float _spinStartTime = .25f;
     public float _spinEndTime = .25f;
@@ -96,6 +101,7 @@ public class RatBehavior : MonoBehaviour
     void Start()
     {
         fsm = new StateMachine(this);
+        EventManager.TriggerEvent("soundtrack", new Dictionary<string, object> { { "name", SoundtrackNames.Sewer } });
         //_rb = GetComponent<Rigidbody2D>();
         _animator = GetComponentInChildren<Animator>();
         _playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
@@ -287,15 +293,30 @@ public class RatBehavior : MonoBehaviour
                 {
                     transform.position = Vector2.MoveTowards(transform.position, _moveTarget, _jumpSpeed * Time.deltaTime);
                 }
-            } else if (_jumpSubstate == JumpSubstate.Hover)
+            }
+            else if (_jumpSubstate == JumpSubstate.Hover)
             {
-                if (state.timer.Elapsed - _tempTimer1 < _jumpHoverTime / 1.1f)
+                if (state.timer.Elapsed - _tempTimer1 < _jumpHoverTime)
                 {
                     _shadowObject.transform.position = new Vector2(transform.position.x, _shadowObject.transform.position.y);
                     _moveTarget = new Vector2(_playerTransform.position.x, _waypointAirLevel.position.y);
                     transform.position = Vector2.MoveTowards(transform.position, _moveTarget, _jumpSpeed * Time.deltaTime);
                 }
                 if (state.timer.Elapsed - _tempTimer1 > _jumpHoverTime)
+                {
+                    _jumpSubstate = JumpSubstate.HoverStill;
+                    _tempTimer1 = state.timer.Elapsed;
+                    // Oh lawd spaghetti
+                    Instantiate(_rubblePrefab, new Vector2(transform.position.x, 2.5f), Quaternion.Euler(new Vector3(90, 0, 0)));
+                }
+            }
+            else if (_jumpSubstate == JumpSubstate.HoverStill)
+            {
+                if (state.timer.Elapsed - _tempTimer1 < _jumpHoverStillTime)
+                {
+                    _shadowObject.transform.position = new Vector2(transform.position.x, _shadowObject.transform.position.y);
+                }
+                if (state.timer.Elapsed - _tempTimer1 > _jumpHoverStillTime)
                 {
                     _jumpSubstate = JumpSubstate.Fall;
                     _tempTimer1 = state.timer.Elapsed;
@@ -333,7 +354,9 @@ public class RatBehavior : MonoBehaviour
         onEnter: (state) =>
         {
             if (doLogging) Debug.Log("Entering SpinState");
-            _animator.SetTrigger("idle");
+            _animator.SetTrigger("rageWindup");
+            EventManager.TriggerEvent("sfx", new Dictionary<string, object> { { "name", SfxNames.RatWhistle } });
+            Instantiate(_rageParticlesPrefab, transform.position, Quaternion.Euler(new Vector3(-90, 0, 0)));
         },
         onLogic: (state) => {
             if (_actionSubstate == ActionSubstate.Start)
@@ -345,10 +368,11 @@ public class RatBehavior : MonoBehaviour
                     _actionSubstate = ActionSubstate.Action;
                     _tempTimer1 = state.timer.Elapsed;
                     _spinHitbox.SetActive(true);
-                    _spinParticleSystem.Emit(1);
+                    //_spinParticleSystem.Emit(1);
                     _spinImpulseSource.GenerateImpulseWithForce(1);
                     EventManager.TriggerEvent("sfx", new Dictionary<string, object> { { "name", SfxNames.RatSpin } });
-                    _animator.SetTrigger("spin");
+                    _animator.SetTrigger("rage");
+                    Instantiate(_rageExplosionPrefab, (Vector2)transform.position + _rageExplosionOffset, Quaternion.Euler(new Vector3(-90, 0, 0)));
                 }
             }
             else if (_actionSubstate == ActionSubstate.Action)
@@ -377,14 +401,13 @@ public class RatBehavior : MonoBehaviour
         onEnter: (state) =>
         {
             if (doLogging) Debug.Log("Entering DeadState");
-            _renderer.color = Color.red;
             BoxCollider2D[] colliders = GetComponentsInChildren<BoxCollider2D>();
             foreach (BoxCollider2D collider in colliders)
             {
                 if (collider.isTrigger) collider.enabled = false;
             }
             // TODO: play dead animation
-            _animator.SetTrigger("idle");
+            _animator.SetTrigger("dead");
         }));
 
         fsm.AddTriggerTransitionFromAny("TriggerIdle", new Transition("", "IdleState"));
@@ -488,10 +511,12 @@ public class RatBehavior : MonoBehaviour
 
     private void FaceLeft()
     {
-        _renderer.flipX = false;
+        //_renderer.flipX = false;
+        transform.rotation = Quaternion.Euler(0, 0, 0);
     }
     private void FaceRight()
     {
-        _renderer.flipX = true;
+        //_renderer.flipX = true;
+        transform.rotation = Quaternion.Euler(180, 0, 180);
     }
 }

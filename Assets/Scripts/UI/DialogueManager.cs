@@ -12,11 +12,17 @@ public class DialogueManager : MonoBehaviour
     [SerializeField] private TMP_Text textRight;
     [SerializeField] private Image portraitLeft;
     [SerializeField] private Image portraitRight;
+    [SerializeField] private Image continueArrow;
+    [SerializeField] private Image skipIcon;
+    [SerializeField] private Image staticSkipIcon;
     [SerializeField] private DialogueObject testDialogue;
 
     private TypewriterEffect typewriterEffect;
     private TMP_Text activeTextLabel;
     private Image activePortrait;
+    private float skipTimer;
+    public float skipHoldTime;
+    private bool isTimedDialogue = false;
 
     // Sprites
     public Sprite spritePlayer;
@@ -26,30 +32,82 @@ public class DialogueManager : MonoBehaviour
 
     private void Start()
     {
+        skipTimer = 0;
         typewriterEffect = GetComponent<TypewriterEffect>();
+        if (continueArrow) continueArrow.enabled = false;
         CloseDialogueBox();
     }
 
-    public void ShowDialogue(DialogueObject dialogueObject, Action onEnd = null) {
-        dialogueBox.SetActive(true);
-        EventManager.TriggerEvent("onDialogueOpen", new Dictionary<string, object> { { "dialogue", dialogueObject } });
-        StartCoroutine(StepThroughDialogue(dialogueObject, onEnd: onEnd));
+    private void Update()
+    {
+        if (!isTimedDialogue)
+        {
+            if (Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.E) || Input.GetMouseButton(0) || Input.GetKey(KeyCode.Period))
+            {
+                if (skipTimer >= skipHoldTime)
+                {
+                    skipTimer = skipHoldTime;
+                } else
+                {
+                    skipTimer += Time.deltaTime;
+                }
+            }
+            else
+            {
+                if (skipTimer <= 0)
+                {
+                    skipTimer = 0;
+                } else
+                {
+                    skipTimer -= Time.deltaTime;
+                }
+            }
+        }
+        skipIcon.fillAmount = skipTimer / skipHoldTime;
     }
 
-    private IEnumerator StepThroughDialogue(DialogueObject dialogueObject, Action onEnd = null)
+    public void ShowDialogue(DialogueObject dialogueObject, Action onEnd = null, float closeTime = 0) {
+        dialogueBox.SetActive(true);
+        EventManager.TriggerEvent("onDialogueOpen", new Dictionary<string, object> { { "dialogue", dialogueObject } });
+        StartCoroutine(StepThroughDialogue(dialogueObject, onEnd: onEnd, closeTime: closeTime));
+    }
+
+    private IEnumerator StepThroughDialogue(DialogueObject dialogueObject, Action onEnd = null, float closeTime = 0)
     {
+        if (closeTime != 0)
+        {
+            isTimedDialogue = true;
+            skipTimer = 0;
+            staticSkipIcon.enabled = false;
+        }
         foreach (DialogueLine dialogueLine in dialogueObject.Dialogue)
         {
+            skipTimer = 0;
             activeTextLabel = enableText(dialogueLine.Position);
             activePortrait = enablePortrait(dialogueLine.Position, dialogueLine.DialoguePortrait);
             yield return typewriterEffect.Run(dialogueLine.Line, activeTextLabel);
-            yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.E) || Input.GetMouseButtonDown(0));
+            if (closeTime == 0)
+            {
+                continueArrow.enabled = true;
+                yield return new WaitUntil(() => Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.E) || Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Period) 
+                || skipTimer >= skipHoldTime);
+                continueArrow.enabled = false;
+                if (skipTimer >= skipHoldTime)
+                {
+                    break;
+                }
+            } else
+            { 
+                yield return new WaitForSeconds(closeTime);
+            }
         }
         if (onEnd != null)
         {
             onEnd();
         }
         CloseDialogueBox();
+        isTimedDialogue = false;
+        staticSkipIcon.enabled = true;
         yield return new WaitForSeconds(0.25f);
         EventManager.TriggerEvent("onDialogueClose", new Dictionary<string, object> { { "dialogue", dialogueObject } });
     }

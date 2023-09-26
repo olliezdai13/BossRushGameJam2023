@@ -16,6 +16,8 @@ public class UIManager : MonoBehaviour
       new Keyframe(0, 0, 1, 1),
       new Keyframe(1, 1, 1, 1)
     );
+
+    private GameObject whiteFlashImage;
     private float _currentBossHp = -999;
 
     void OnEnable()
@@ -80,7 +82,11 @@ public class UIManager : MonoBehaviour
 
     void changePlayerHealth(int hp, int maxhp)
     {
-        //healthText.text = "Player HP: " + hp + "/" + maxhp;
+        if (hp <= 0)
+        {
+            whiteFlashImage = GameObject.FindGameObjectWithTag("WhiteFlashImage");
+            whiteFlashImage.GetComponent<Animator>()?.SetTrigger("flashRed");
+        }
     }
 
     void changeBossHealth(int hp, int maxhp)
@@ -90,6 +96,11 @@ public class UIManager : MonoBehaviour
             _currentBossHp = hp;
         }
         StartCoroutine(AnimateHealthbar(_currentBossHp / (float)maxhp, (float)hp / (float)maxhp, _bossHpLerpDuration));
+        if (hp <= 0)
+        {
+            whiteFlashImage = GameObject.FindGameObjectWithTag("WhiteFlashImage");
+            whiteFlashImage.GetComponent<Animator>()?.SetTrigger("flash");
+        }
         _currentBossHp = hp;
     }
 
@@ -109,7 +120,7 @@ public class UIManager : MonoBehaviour
     void OnDialogueClose(Dictionary<string, object> data)
     {
         DialogueObject dialogue = (DialogueObject)data["dialogue"];
-        if (dialogue.FreezePlayer)
+        if (_currentBossHp > 0 && dialogue.FreezePlayer && GameManager.instance.currentLevel > 0)
         {
             _healthBarBackground.enabled = true;
             _healthBarForeground.enabled = true;
